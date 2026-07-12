@@ -6,4 +6,4 @@ __pycache__/
 venv/
 
 # local test warehouses generated while developing/testing mini_iceberg
-iceberg/warehouse/
+01-storage-and-file-formats/mini-iceberg/warehouse/

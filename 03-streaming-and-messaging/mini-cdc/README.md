@@ -44,7 +44,7 @@ gets answered.
 * **Detect a column add:** Alter the source table's schema mid-stream and
   make sure new events reflect it without restarting the connector.
 * **Fail loudly on unsupported DDL:** A column *rename* or *type change* is
-  exactly the kind of schema evolution `iceberg/CASE_STUDY.md` §3 discussed
+  exactly the kind of schema evolution `mini-iceberg/CASE_STUDY.md` §3 discussed
   (name-based matching breaks silently) — deliberately make this project
   detect and hard-fail on such changes rather than silently corrupting
   downstream data.

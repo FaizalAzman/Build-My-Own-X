@@ -54,7 +54,7 @@ A schema registry's entire value is turning "someone changed a producer's
 schema in a way that breaks fifty downstream consumers" from a Wednesday-
 afternoon incident into a rejected pull request — the compatibility check
 you implement in Phase 2 *is* that safety net. This is also the most
-concrete illustration in this whole curriculum of why `iceberg/`'s
+concrete illustration in this whole curriculum of why `mini-iceberg`'s
 name-based schema matching (flagged in `CASE_STUDY.md` §3) is fragile: this
 project makes rename-breaks-everything a check you can trigger and see
 fail on purpose, not just a warning in a docstring.

@@ -8,7 +8,7 @@
 | **Use case** | Kafka message payloads, Iceberg manifests/manifest lists | Same conceptual role, used to re-encode `mini_iceberg`'s manifests |
 
 The direct row-based counterpart to `mini-parquet` (same group) — same
-project, opposite layout. Real `iceberg/` manifests are Avro; `mini_iceberg`
+project, opposite layout. Real Iceberg manifests are Avro; `mini_iceberg`
 used JSON instead (`CASE_STUDY.md` §2) — this project is where you go back
 and actually build the thing that was skipped.
 

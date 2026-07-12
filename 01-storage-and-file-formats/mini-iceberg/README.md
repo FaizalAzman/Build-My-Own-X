@@ -50,7 +50,7 @@ Build this as a small, importable Python library (mirrors how real PyIceberg/Spa
 **Package layout**
 
 ```
-iceberg/
+mini-iceberg/
   README.md
   requirements.txt          # pyarrow, pandas, pytest
   mini_iceberg/
@@ -149,5 +149,5 @@ compact      <warehouse> <name> [--threshold-bytes N]
 **Verification**
 
 - `tests/test_end_to_end.py` (pytest, uses `tmp_path`): create table → two appends → assert `read()` row count and `read(snapshot_id=1)` time-travel row count → several more small appends → `compact()` → assert data file count drops, `read()` still returns all correct rows, and reading an old snapshot ID still succeeds post-compaction.
-- Run `pip install -r iceberg/requirements.txt && pytest iceberg/tests -v` — all tests green.
-- Run `python iceberg/demo.py` to manually eyeball the narrated walkthrough (snapshot IDs, file counts before/after compaction).
+- From `01-storage-and-file-formats/mini-iceberg/`, run `pip install -r requirements.txt && pytest tests -v` — all tests green.
+- Run `python demo.py` (from that same folder) to manually eyeball the narrated walkthrough (snapshot IDs, file counts before/after compaction).

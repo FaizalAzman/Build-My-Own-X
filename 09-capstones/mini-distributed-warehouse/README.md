@@ -25,7 +25,7 @@ individual pieces ever hit alone.
 * **A cluster-wide catalog:** Run `mini_iceberg`'s `Catalog` behind
   `mini-coordination-service` so every compute node in the cluster agrees
   on which snapshot is current — the multi-node version of the exact
-  single-writer guarantee `iceberg/CASE_STUDY.md` §6 discussed.
+  single-writer guarantee `mini-iceberg/CASE_STUDY.md` §6 discussed.
 
 ### **Phase 2: Distributed Query Execution**
 

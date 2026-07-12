@@ -8,9 +8,9 @@
 | **Joins** | Broadcast, shuffle hash, sort-merge, adaptive | Hash join + sort-merge join, manually chosen |
 | **Catalog** | Pluggable (Hive, Glue, Iceberg REST) | Reads directly from `mini_iceberg`'s `Catalog` |
 
-This is the direct sequel to `iceberg/`: it reads the exact tables that
+This is the direct sequel to `mini-iceberg`: it reads the exact tables that
 project produces, and finally uses the column stats `mini_iceberg` computes
-but never acts on (see `iceberg/CASE_STUDY.md` §4).
+but never acts on (see `mini-iceberg/CASE_STUDY.md` §4).
 
 ---
 
@@ -29,7 +29,7 @@ but never acts on (see `iceberg/CASE_STUDY.md` §4).
 * **Manifest-level pruning:** Before reading any Parquet file, compare the
   `WHERE` clause's predicate against each active manifest entry's
   `column-stats` (min/max) and skip files that provably can't match —
-  exactly the extension `iceberg/CASE_STUDY.md` names as the natural next
+  exactly the extension `mini-iceberg/CASE_STUDY.md` names as the natural next
   step.
 * **Residual predicate:** After pruning, the filter still has to be applied
   row-by-row to whatever files remain (stats only *rule out* files, they

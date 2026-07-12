@@ -8,7 +8,7 @@
 | **Nesting** | Full Dremel-style repetition/definition levels for nested/repeated fields | Flat schemas only (no structs/lists) |
 | **Footer** | Thrift-encoded metadata at file end | JSON metadata at file end |
 
-`iceberg/` used `pyarrow.parquet` as a black box. This project opens that box:
+`mini-iceberg` used `pyarrow.parquet` as a black box. This project opens that box:
 you're writing the actual byte layout a Parquet reader parses, not calling a
 library that does it for you.
 

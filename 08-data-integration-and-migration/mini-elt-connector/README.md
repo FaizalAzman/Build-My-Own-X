@@ -45,7 +45,7 @@ polling an API or table on an interval instead of streaming a WAL.
   `get_schema()`) against what was last seen; a new field appearing is
   common and should auto-add a column to the destination.
 * **Handle a removed or type-changed field:** Unlike a new field, these
-  can't be safely auto-resolved (matching `iceberg/CASE_STUDY.md` §3's
+  can't be safely auto-resolved (matching `mini-iceberg/CASE_STUDY.md` §3's
   point about name-based schema matching) — implement this as a sync that
   pauses and flags for human review rather than guessing.
 

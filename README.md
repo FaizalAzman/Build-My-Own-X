@@ -6,7 +6,8 @@ with the design decisions the real thing's authors had to make. The goal
 isn't "can I build a toy Kafka" — it's "having built one, I now know exactly
 *why* Kafka's partition model looks the way it does, and what it costs you."
 
-Every project README follows the same shape as [`iceberg/README.md`](iceberg/README.md):
+Every project README follows the same shape as
+[`mini-iceberg/README.md`](01-storage-and-file-formats/mini-iceberg/README.md):
 a scope table (what the mini version deliberately drops vs. the real system,
 and why), then a phased build plan, then a closing note on what building it
 actually exposes about the real tool's strengths and weaknesses. There's no
@@ -16,24 +17,17 @@ explicitly assumes most of what comes before it.
 
 This list isn't meant to be completed quickly. It's meant to be complete.
 
-## Status
-
-- ✅ [`iceberg/`](iceberg/) — Apache Iceberg's table format (catalog, metadata
-  tree, snapshots/manifests, time travel, compaction). **Done** — see
-  [`iceberg/CASE_STUDY.md`](iceberg/CASE_STUDY.md) for a full writeup of where
-  it matches real Iceberg, where it simplifies and why, plus anti-patterns and
-  performance notes.
-- ⬜ Everything below — scoped, not yet started.
-
 ## 01 — Storage & File Formats
 
 The layer underneath everything else: how bytes on disk trade off write
-speed, read speed, and space. `iceberg/` used PyArrow's Parquet reader/writer
-as a black box — these fill in what's inside that box, and what the
-alternatives (row-based, write-optimized, read-optimized) actually cost.
+speed, read speed, and space. `mini-iceberg` used PyArrow's Parquet
+reader/writer as a black box — these fill in what's inside that box, and
+what the alternatives (row-based, write-optimized, read-optimized) actually
+cost.
 
 | Project | Teaches |
 |---|---|
+| ✅ [`mini-iceberg`](01-storage-and-file-formats/mini-iceberg/) | **Done.** Apache Iceberg's table format: catalog, metadata tree, snapshots/manifests, time travel, compaction — see [`CASE_STUDY.md`](01-storage-and-file-formats/mini-iceberg/CASE_STUDY.md) for where it matches real Iceberg, where it simplifies and why, plus anti-patterns and performance notes |
 | [`mini-parquet`](01-storage-and-file-formats/mini-parquet/) | What's inside a columnar file format: row groups, encoding, stats, pruning |
 | [`mini-avro`](01-storage-and-file-formats/mini-avro/) | Row-based serialization and schema resolution — the direct contrast to Parquet, and what real Iceberg manifests actually use |
 | [`mini-lsm`](01-storage-and-file-formats/mini-lsm/) | Write-optimized storage: memtable, WAL, SSTables, compaction strategies |
@@ -42,8 +36,8 @@ alternatives (row-based, write-optimized, read-optimized) actually cost.
 ## 02 — Query Engines & Compute
 
 The layer that reads storage and answers questions. This is where
-`iceberg/`'s unused column stats (flagged in its case study) finally get put
-to work, and where "just add an index" stops being an incantation.
+`mini-iceberg`'s unused column stats (flagged in its case study) finally get
+put to work, and where "just add an index" stops being an incantation.
 
 | Project | Teaches |
 |---|---|
@@ -138,7 +132,7 @@ shape of a real production system.
 
 For each project: read its scope table first — the "Real System" column is
 the thing you're studying, the "Mini" column is what you're actually going
-to type. Build it, then (as we did for `iceberg/`) write a `CASE_STUDY.md`
+to type. Build it, then (as we did for `mini-iceberg`) write a `CASE_STUDY.md`
 comparing your design's decisions against the real system's, with a
 particular eye toward: what would break at 100x the scale, 10x the
 concurrent writers, or under a failure this project never tests. That last
