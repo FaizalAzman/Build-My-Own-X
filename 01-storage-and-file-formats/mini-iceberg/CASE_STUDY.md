@@ -337,6 +337,125 @@ skipping the "load and rewrite Parquet" step entirely.
 
 ---
 
+## 13. Decision: when to choose Iceberg (and when not to)
+
+This section follows [`templates/CASE_STUDY_DECISION.md`](../../templates/CASE_STUDY_DECISION.md).
+Thresholds are rules of thumb unless they cite a section above. Treat them as
+assumptions to revisit after `mini-query-engine` and `mini-shuffle` produce
+real measurements.
+
+### The decision space
+
+| Option | What it is | Who typically picks it |
+|---|---|---|
+| Apache Iceberg, self-chosen catalog (REST, Glue, Hive) | Open table format over Parquet on object storage, read and written by Spark/Trino/Flink/PyIceberg | Platforms with several engines and a team able to run table maintenance |
+| Managed Iceberg (a cloud provider's or warehouse vendor's managed tables/catalog) | Same format, with the catalog and often the maintenance run for you | Teams that want an open format without owning the operations |
+| A peer format (Delta Lake, Hudi) | Same core idea (§1), different ecosystems and strengths; Hudi was built around upserts | Orgs already committed to the ecosystem that format grew up in |
+| Plain Parquet in partitioned folders + a metastore | No snapshots, no atomic commits; a "table" is a directory listing | Append-only batch data with one writer and tolerance for a bad run |
+| Nothing: warehouse-native tables, Postgres, or DuckDB on files | Let one engine own storage entirely | Small data, one engine, or a team with no platform capacity |
+
+### The forces that decide it
+
+| Force | Why it matters here | Threshold where the answer changes |
+|---|---|---|
+| Number of engines on the same data | Multi-engine access is Iceberg's actual reason to exist (§10) | **1 engine** → warehouse-native usually wins. **2 or more** reading/writing the same tables (e.g. Spark ETL + Trino BI + Python ML) → Iceberg's main benefit applies. |
+| Data volume | Below some size, the operational overhead isn't paid back | Under ~1 TB total → "nothing" is usually right. Tens of TB and up, with storage you want independent of compute → Iceberg or a warehouse. |
+| Commit frequency | Every commit writes new metadata (§1, §12), and old metadata accumulates until expired (§9) | Commits every few seconds → metadata and small-file churn dominate. Batch commits to ≥1–5 minute intervals, or pick a system built for streaming ingestion. |
+| Row-level updates/deletes | Needs copy-on-write or merge-on-read (§8), plus compaction | Frequent upserts (CDC) → merge-on-read plus aggressive compaction, or compare with Hudi. Append-only → any option works. |
+| Concurrent writers | Optimistic concurrency control (§6) is cheap when conflicts are rare | Many writers on the *same* partitions → retry storms. Restructure the writes, don't just add retries. |
+| Ops capacity | Compaction, snapshot expiry and orphan cleanup (§9, §12) are recurring jobs someone owns | Nobody to own those jobs → choose managed Iceberg or warehouse-native. |
+| Lock-in | The data format is open, but the **catalog** becomes the new lock-in point | If engine choice may change, choose a catalog that every candidate engine supports. |
+| Compliance (erasure) | Deleted rows survive in old snapshots until expiry (§8, §9) | An erasure deadline caps snapshot retention, and so caps time travel. |
+
+### Decision table
+
+| If… | Choose | Because | The cost you accept |
+|---|---|---|---|
+| One engine, under a few TB, BI-heavy | Warehouse-native tables | No format or catalog to run; the engine optimizes its own storage | Engine lock-in; other engines go through exports |
+| Several engines, tens of TB+, mostly appends | Iceberg with a managed catalog | One copy of the data, every engine agrees on what's "current" (§1, §10) | Maintenance jobs, catalog dependency, uneven feature support across engines |
+| Heavy CDC upserts, minute-level freshness | Iceberg merge-on-read (or evaluate Hudi) + scheduled compaction | Row-level changes without rewriting files on every write (§8) | Reads pay merge cost until compaction catches up |
+| Append-only, one writer, rebuildable from source | Plain partitioned Parquet | Simplest thing that works | No atomic commits, so readers can see partial writes; no time travel |
+| Sub-second ingestion-to-query latency | Not a table format: a real-time OLAP store or a stream | Commit overhead per snapshot is the wrong cost shape | A second storage system to keep consistent |
+
+### Cost shape
+
+Object storage itself is cheap and grows linearly with data. The costs that
+grow faster come from **metadata and maintenance**. In `mini_iceberg`, every
+append writes four new files (data file, manifest, snapshot, metadata);
+real Iceberg is similar. Back-of-envelope for one streaming table:
+
+- Committing every 10 s gives 8,640 commits/day, so ~35,000 new objects/day
+  before compaction, plus a metadata file that lists ever more snapshots
+  until `expire_snapshots` runs.
+- Committing every 5 min gives 288 commits/day: ~1,150 objects. That's
+  **30× less metadata churn** for a freshness cost most consumers never
+  notice.
+
+At small scale, people cost dominates. Running compaction, expiry and
+catalog upgrades is a real fraction of an engineer, which is why "nothing"
+wins below a few TB.
+
+### Operational burden
+
+- The **catalog** must be highly available: if it's down, nobody can commit.
+- Compaction, `expire_snapshots`, `remove_orphan_files` and `rewrite_manifests`
+  must be scheduled and monitored per table (§9, §12).
+- Engines support different spec versions and features. Check the matrix
+  before relying on a newer feature.
+- Monitor files per partition, snapshot count, metadata size, and query
+  planning time vs. scan time.
+
+### Failure modes and blast radius
+
+1. **Small files and metadata growth** (§12): query planning slows until
+   it costs more than the scan. Blast radius: every reader of that table.
+   Detect it with files-per-partition and planning-time metrics.
+2. **Two catalogs pointing at the same table** (for example during a
+   migration): each catalog's compare-and-swap (§6) only protects its own
+   pointer, so both accept commits and the table history splits. Blast
+   radius: the whole table, discovered late. Prevent it with a single write
+   catalog per table, enforced, not agreed.
+3. **Orphan cleanup with too short a window:** it deletes data files that
+   an in-flight write has created but not yet committed, and the commit then
+   points at missing files. Blast radius: silent data loss. Prevent it by
+   keeping the orphan-file age threshold well above your longest write job.
+
+### Reversibility
+
+The **data** is a two-way door: it's plain Parquet, and metadata translators
+(e.g. Apache XTable) can expose the same files as Delta or Hudi. The
+**catalog** is closer to a one-way door: permissions, governance and every
+engine's configuration attach to it. Choose the catalog more carefully than
+the format.
+
+### Signals you chose wrong
+
+- More than ~90% of queries come from one engine, and you built compaction
+  pipelines nobody else needed. Warehouse-native would have been cheaper.
+- Query planning time regularly exceeds scan time.
+- Maintenance jobs use a growing share of platform compute, or the team
+  spends more time on table upkeep than on modeling.
+- You keep wanting sub-minute freshness and fighting commit overhead.
+
+### Recommendation for a concrete scenario
+
+*Scenario:* 40 TB of event and CDC data growing ~2 TB/month. Spark for ETL,
+Trino for BI, Python for ML, and Postgres CDC with frequent updates. A team of
+6 engineers, with GDPR erasure required within 30 days.
+
+*Recommendation:* Use Iceberg with a managed REST-compatible catalog. Use
+merge-on-read for the CDC tables, with compaction scheduled hourly on hot
+partitions. Commit streaming writes every 1–5 minutes, not continuously. Set
+snapshot expiry to 7–14 days so erasure completes within 30 days, accepting
+the shorter time-travel window that implies. Several engines on one copy of
+the data justifies the maintenance cost at this size; the team of 6 is the
+reason to buy a managed catalog rather than run one. *Monitor:* files per
+partition, planning vs. scan time, maintenance compute as a share of the
+total, and erasure completion lag. If one engine ends up serving more than
+90% of queries, revisit warehouse-native.
+
+---
+
 ## Summary table
 
 | Concept | mini_iceberg | Apache Iceberg | Complexity driver |

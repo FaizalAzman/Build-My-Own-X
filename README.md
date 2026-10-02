@@ -6,6 +6,18 @@ with the design decisions the real thing's authors had to make. The goal
 isn't "can I build a toy Kafka" — it's "having built one, I now know exactly
 *why* Kafka's partition model looks the way it does, and what it costs you."
 
+And the real point, which everything above serves: **being able to reason
+about data systems architecturally.** That means deciding when to use Kafka,
+something else or nothing at all, at what scale the answer changes, and
+defending that decision in writing. Building teaches how a system works. The
+decision sections and the design exercises in group 10 turn that into
+judgment. The repo has two tracks:
+
+- **Build track (groups 01–09):** take a real system apart by rebuilding it,
+  then write a case study that ends in a *decision* section.
+- **Design track (group 10):** write design docs for realistic platform
+  problems, using the case studies as evidence. No code.
+
 Every project README follows the same shape as
 [`mini-iceberg/README.md`](01-storage-and-file-formats/mini-iceberg/README.md):
 a scope table (what the mini version deliberately drops vs. the real system,
@@ -128,6 +140,38 @@ shape of a real production system.
 | [`mini-spark-core`](09-capstones/mini-spark-core/) | Driver/executor architecture, DAG-of-stages scheduling, lineage-based fault tolerance — built on `mini-shuffle` |
 | [`mini-distributed-warehouse`](09-capstones/mini-distributed-warehouse/) | A full MPP query engine across `mini-object-store` + `mini-coordination-service` + `mini-query-engine` + `mini-shuffle` — where distributed scaling actually stops paying off |
 
+## 10 — Architecture & Design
+
+The track the rest of the repo exists for. Groups 01–09 teach how systems
+work. This group teaches **choosing and combining them under real
+constraints**: volume, latency, budget, team size, deadlines and regulation.
+Each exercise is a realistic platform problem answered with a design doc in
+the shape of [`templates/DESIGN_DOC.md`](templates/DESIGN_DOC.md). There's no
+code. The evidence is the case studies you've already written.
+
+Every exercise ends with a **constraint-change round**: three changes to the
+requirements, and for each one you explain what changes in your design and
+what doesn't. That round is the actual test. Knowing which parts of a design
+are load-bearing for which requirement is what separates architectural
+reasoning from naming the right tools.
+
+**Do these as you go, not at the end.** Write a first version (v1) of an
+exercise as soon as you've built one or two of the projects it draws on.
+Write v2 after building the rest. The difference between v1 and v2 shows you
+what the builds actually taught you. Then get v2 reviewed by someone else,
+because judgment only improves when it's challenged.
+
+| Exercise | The core decision | Draws on |
+|---|---|---|
+| [`design-analytics-data-model`](10-architecture-and-design/design-analytics-data-model/) | Grain, history (SCD), and where metric definitions live: Kimball vs. Data Vault vs. one big table | `mini-dbt`, `mini-query-engine`, `mini-materialized-views`, `mini-lineage` |
+| [`design-realtime-fraud-pipeline`](10-architecture-and-design/design-realtime-fraud-pipeline/) | Working back from a 60 ms latency budget: what's precomputed vs. computed at request time, and how it degrades | `mini-kafka`, `mini-stream-processor`, `mini-feature-store`, `mini-lsm` |
+| [`design-customer-facing-analytics`](10-architecture-and-design/design-customer-facing-analytics/) | Serving engine and tenant isolation for many small queries with a hard latency target | `mini-query-engine`, `mini-vectorized-exec`, `mini-materialized-views`, `mini-rbac-data-access` |
+| [`design-warehouse-to-lakehouse-migration`](10-architecture-and-design/design-warehouse-to-lakehouse-migration/) | Target platform, migration order by lineage, and proving the numbers match before cutover | `mini-dms`, `mini-iceberg`, `mini-lineage`, `mini-airflow` |
+| [`design-gdpr-event-lake`](10-architecture-and-design/design-gdpr-event-lake/) | Erasure and data residency in immutable storage: physical deletes vs. crypto-shredding vs. pseudonymisation | `mini-iceberg`, `mini-rbac-data-access`, `mini-data-catalog`, `mini-lineage` |
+| [`design-platform-cost-reduction`](10-architecture-and-design/design-platform-cost-reduction/) | Reading a cloud bill back to the design decisions that caused it, and cutting 40% without breaking SLAs | `mini-parquet`, `mini-iceberg`, `mini-cbo`, `mini-dbt` |
+| [`design-data-reliability-and-dr`](10-architecture-and-design/design-data-reliability-and-dr/) | Data SLOs by tier, write-audit-publish, and RPO/RTO that include metadata | `mini-airflow`, `mini-data-observability`, `mini-great-expectations`, `mini-iceberg` |
+| [`design-platform-ownership-model`](10-architecture-and-design/design-platform-ownership-model/) | Who owns what: centralised vs. data mesh vs. platform-as-product, and the contracts between teams | `mini-data-contracts`, `mini-data-catalog`, `mini-schema-registry`, `mini-elt-connector` |
+
 ## How to use this repo
 
 For each project: read its scope table first — the "Real System" column is
@@ -139,6 +183,21 @@ concurrent writers, or under a failure this project never tests. That last
 step is where "I built a toy" turns into "I understand the tradeoff" —
 it's not optional, and it's the actual deliverable, not the code.
 
-If a new tool or concept isn't on this list and it can be built and taken
-apart, it belongs here — add a group or a project rather than treating this
-as closed.
+Every case study then ends with a **decision section** following
+[`templates/CASE_STUDY_DECISION.md`](templates/CASE_STUDY_DECISION.md): when
+you'd choose the real system, a managed equivalent, a simpler alternative or
+nothing at all, with the numbers at which that answer changes, plus the cost
+shape, operational burden, reversibility, and the signals that you chose
+wrong. The [`mini-iceberg` case study](01-storage-and-file-formats/mini-iceberg/CASE_STUDY.md#13-decision-when-to-choose-iceberg-and-when-not-to)
+has a worked example.
+
+The full loop for each project is:
+
+1. **Build** the mini version.
+2. **Case study:** how the real system works and what changes at scale.
+3. **Decision:** when you'd choose it, and what would change your mind.
+4. **Design:** use that decision as evidence in a group 10 design doc, and
+   revise the doc when a later project changes your mind.
+
+Steps 1–2 build understanding. Steps 3–4 build judgment. Working as an
+architect needs both, but it's judgment that gets tested.
