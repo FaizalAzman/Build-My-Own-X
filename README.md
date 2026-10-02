@@ -201,3 +201,19 @@ The full loop for each project is:
 
 Steps 1–2 build understanding. Steps 3–4 build judgment. Working as an
 architect needs both, but it's judgment that gets tested.
+
+## Playgrounds
+
+Finished projects also run in the browser: see [`playground/`](playground/).
+Each playground loads the project's unmodified source into Pyodide, then walks
+through the build phases and runs experiments that test claims from the case
+study. For example, the [`mini-iceberg` playground](playground/mini-iceberg/)
+measures what committing too often costs, and shows a commit being silently
+lost when two writers have no compare-and-swap. Once a project's case study
+is written, give it a playground (see
+[`playground/README.md`](playground/README.md)). Measurements you take
+yourself make better evidence for design docs than vendor benchmarks.
+
+If a new tool or concept isn't on this list and it can be built and taken
+apart, it belongs here — add a group or a project rather than treating this
+as closed.

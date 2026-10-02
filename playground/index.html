@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Build-My-Own-X Playgrounds</title>
+  <meta name="description" content="Run the Build-My-Own-X data engineering projects in your browser.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="crumbs"><a href="https://github.com/FaizalAzman/Build-My-Own-X">Build-My-Own-X</a> / Playgrounds</div>
+    <h1>Playgrounds</h1>
+    <p class="lede">
+      Each finished project in the curriculum runs here, unmodified, in Python compiled to WebAssembly. Every
+      playground walks through the build phases, then runs experiments that test claims from the project's case
+      study: what a design costs, and how it fails.
+    </p>
+  </header>
+  <main class="layout" style="grid-template-columns: minmax(0, 1fr)">
+    <ul class="cards">
+      <li>
+        <span class="label" style="align-self: flex-start">01 · Storage</span>
+        <h2><a href="mini-iceberg/">mini-iceberg</a></h2>
+        <p class="muted">Catalog, snapshots, manifests, time travel and compaction. Experiments: the cost of
+          committing too often, and two writers without compare-and-swap.</p>
+      </li>
+      <li class="pending">
+        <span class="label" style="align-self: flex-start">Next</span>
+        <h2>mini-parquet</h2>
+        <p class="muted">Gets a playground once it's built. See the curriculum for what's coming.</p>
+      </li>
+    </ul>
+  </main>
+</body>
+</html>

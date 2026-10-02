@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>mini-iceberg Playground</title>
+  <meta name="description" content="Run mini-iceberg, a from-scratch Apache Iceberg table format, in your browser: commits, time travel, compaction, and the failure modes behind them.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="crumbs"><a href="../">Playgrounds</a> / mini-iceberg</div>
+    <h1>mini-iceberg, running in your browser</h1>
+    <p class="lede">
+      This page runs the real <code>mini_iceberg</code> source from this repo in Python compiled to WebAssembly
+      (Pyodide). Nothing is sent to a server. Run the steps in order, and watch the metadata tree change
+      with every commit. Background:
+      <a href="https://github.com/FaizalAzman/Build-My-Own-X/blob/main/01-storage-and-file-formats/mini-iceberg/README.md">README</a> ·
+      <a href="https://github.com/FaizalAzman/Build-My-Own-X/blob/main/01-storage-and-file-formats/mini-iceberg/CASE_STUDY.md">case study</a>
+    </p>
+    <div class="toolbar">
+      <span id="status" class="status" data-kind="busy" role="status">Starting…</span>
+      <button id="run-all" class="primary" disabled>Run all steps</button>
+      <button id="reset" disabled>Reset warehouse</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section id="steps" class="notebook" aria-label="Steps"></section>
+
+    <aside class="panel" aria-label="Warehouse inspector">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="tab-tree">Metadata tree</button>
+        <button role="tab" aria-selected="false" aria-controls="tab-files">Files</button>
+        <button role="tab" aria-selected="false" aria-controls="tab-source">Source</button>
+        <button role="tab" aria-selected="false" aria-controls="tab-tests">Tests</button>
+      </div>
+
+      <div id="tab-tree" class="tab-body" role="tabpanel">
+        <p class="muted">Loading…</p>
+      </div>
+
+      <div id="tab-files" class="tab-body" role="tabpanel" hidden>
+        <p class="muted small">Every file in the in-memory warehouse. Click one to open it: JSON metadata as text, Parquet as a table.</p>
+        <ul id="file-list" class="file-list"></ul>
+        <div id="file-preview"></div>
+      </div>
+
+      <div id="tab-source" class="tab-body" role="tabpanel" hidden>
+        <p class="muted small">
+          Edit the library itself, then save to reload it. Edits live only in this tab and disappear on refresh.
+          Try adding compare-and-swap to <code>catalog.py</code>, then re-run the two-writers experiment and the tests.
+        </p>
+        <div class="source-bar">
+          <select id="source-file" aria-label="Source file"></select>
+          <button id="source-save" class="primary" disabled>Save &amp; reload</button>
+          <button id="source-revert" disabled>Revert file</button>
+        </div>
+        <p id="source-note" class="note small" role="status"></p>
+        <div id="source-editor"></div>
+      </div>
+
+      <div id="tab-tests" class="tab-body" role="tabpanel" hidden>
+        <p class="muted small">Runs the project's pytest suite against the source as it is now, including any edits from the Source tab.</p>
+        <div class="source-bar">
+          <button id="run-tests" class="primary" disabled>Run tests</button>
+          <span id="test-summary" class="summary small" role="status"></span>
+        </div>
+        <pre id="test-output" class="out" hidden></pre>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    Source: <code>01-storage-and-file-formats/mini-iceberg</code>, loaded unmodified. Python runtime:
+    <a href="https://pyodide.org">Pyodide</a>, with pandas and pyarrow compiled to WebAssembly. The first load
+    downloads about 30 MB; after that the browser caches it.
+  </footer>
+
+  <script type="module">
+    import { startPlayground } from "../shared/app.js";
+    import { project } from "./project.js";
+    startPlayground(project);
+  </script>
+</body>
+</html>
